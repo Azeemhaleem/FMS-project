@@ -48,7 +48,14 @@ function DriverMyFines() {
 
     return (
         <div className='row mt-3'>
-            <div className="search-section container" style={{ backgroundColor: "#d3e2fd", borderRadius: "10px", padding: "0px" }}>
+            
+            <div className="search-section container mb-5 justify-content-center align-items-center "
+    style={{
+      backgroundColor: "#d3e2fd",
+      padding: "1rem",
+      marginLeft: window.innerWidth < 576 ? "3rem" : "2rem"
+
+    }}>
                 <h5 className="fw-bold text-secondary" style={{ margin: "7px" }}>Last 30 days Fines List</h5>
 
                 {loading && <div className="text-center py-3">Loading...</div>}

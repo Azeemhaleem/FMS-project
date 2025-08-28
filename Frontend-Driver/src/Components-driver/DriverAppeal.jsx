@@ -72,112 +72,149 @@ const DriverAppeal = () => {
   };
 
   return (
-    <div className="container-fluid py-5 w-75 mb-5" style={{ backgroundColor: '#a5c8f7', minHeight: '80vh'}}>
-      <div className="container d-flex flex-column flex-md-row gap-4">
-        {/* Appeal Form */}
-        <div className="bg-white p-4 rounded-4 shadow-sm flex-grow-1">
-          <h5 className="fw-semibold mb-3">Appeal</h5>
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Fine ID :</label>
-              <input type="text" className="form-control" name="fineId" value={formData.fineId} onChange={handleChange} required/>
-            </div>
+  <div className="search-section container mb-5 justify-content-center align-items-center "
+    style={{
+      backgroundColor: "#d3e2fd",
+      padding: "1rem",
+      marginLeft: window.innerWidth < 576 ? "2rem" : "3rem"
 
-            <div className="mb-3">
-              <label className="form-label">Issue Type :</label>
-              <select
+    }}>
+    <div className="container">
+      <div className="row g-4">
+        {/* Appeal Form */}
+        <div className="col-12 col-lg-8">
+          <div className="bg-white p-4 rounded-4 shadow-sm h-100">
+            <h5 className="fw-semibold mb-3">Appeal</h5>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label className="form-label">Fine ID :</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="fineId"
+                  value={formData.fineId}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Issue Type :</label>
+                <select
                   className="form-control"
                   name="issueType"
                   value={formData.issueType}
                   onChange={handleChange}
                   required
-              >
-                <option value="" disabled>-- Select a Fine --</option>
-                {fines.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
-                ))}
-              </select>
-            </div>
+                >
+                  <option value="" disabled>
+                    -- Select a Fine --
+                  </option>
+                  {fines.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="mb-3">
-              <label className="form-label">Description :</label>
-              <textarea
-                className="form-control"
-                rows="3"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              ></textarea>
-            </div>
+              <div className="mb-3">
+                <label className="form-label">Description :</label>
+                <textarea
+                  className="form-control"
+                  rows="3"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                ></textarea>
+              </div>
 
-            {/*<div className="mb-4">*/}
-            {/*  <label className="form-label d-block">Upload Evidence :</label>*/}
-            {/*  <input*/}
-            {/*    type="file"*/}
-            {/*    className="form-control w-auto d-inline"*/}
-            {/*    name="evidence"*/}
-            {/*    onChange={handleChange}*/}
-            {/*  />*/}
-            {/*</div>*/}
-
-            <div className="d-flex gap-3">
-              <button type="submit" className="btn btn-primary px-4 w-50">Submit</button>
-              <button type="button" className="btn btn-secondary px-4 w-50" onClick={() => setFormData({ fineId: '', issueType: '', description: '', evidence: null })}>
-                Cancel
-              </button>
-            </div>
-          </form>
+              {/* Buttons: full width on xs, side-by-side from sm+ */}
+              <div className="row g-2">
+                <div className="col-12 col-sm-6">
+                  <button type="submit" className="btn btn-primary w-100">
+                    Submit
+                  </button>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <button
+                    type="button"
+                    className="btn btn-secondary w-100"
+                    onClick={() =>
+                      setFormData({
+                        fineId: "",
+                        issueType: "",
+                        description: "",
+                        evidence: null,
+                      })
+                    }
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
 
         {/* Appeal Status */}
-        <div className="bg-white p-4 rounded-4 shadow-sm" style={{ width: '300px', maxHeight: '500px', overflowY: 'auto' }}>
-          <h5 className="fw-semibold mb-3 border-bottom pb-2">Appeal Status</h5>
-          {appealStatus.map((item, index) => {
-            const dateObj = new Date(item.date);
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            const month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
-            const year = dateObj.getFullYear();
+        <div className="col-12 col-lg-4">
+          <div
+            className="bg-white p-4 rounded-4 shadow-sm h-100"
+            style={{ maxHeight: "500px", overflowY: "auto" }}
+          >
+            <h5 className="fw-semibold mb-3 border-bottom pb-2">Appeal Status</h5>
+            {appealStatus.map((item, index) => {
+              const dateObj = new Date(item.date);
+              const day = String(dateObj.getDate()).padStart(2, "0");
+              const month = dateObj
+                .toLocaleString("default", { month: "short" })
+                .toUpperCase();
+              const year = dateObj.getFullYear();
 
-            let statusColor = 'text-warning';
-            let Icon = AiOutlineExclamationCircle;
-            if (item.status === 'Resolved') {
-              statusColor = 'text-success';
-              Icon = AiOutlineCheckCircle; // Resolved status icon
-            } else if (item.status === 'In Review') {
-              statusColor = 'text-primary';
-              Icon = AiOutlineFileText; // In Review status icon
-            }
+              let statusColor = "text-warning";
+              let Icon = AiOutlineExclamationCircle;
+              if (item.status === "Resolved") {
+                statusColor = "text-success";
+                Icon = AiOutlineCheckCircle;
+              } else if (item.status === "In Review") {
+                statusColor = "text-primary";
+                Icon = AiOutlineFileText;
+              }
 
-            return (
-              <div key={index} className="d-flex align-items-center mb-4">
-                <div className="text-center me-3">
-                  <h4 className="mb-0 fw-bold">{day}</h4>
-                  <small className="d-block">{month}</small>
-                  <small className="d-block">{year}</small>
+              return (
+                <div key={index} className="d-flex align-items-center mb-4">
+                  <div className="text-center me-3" style={{ minWidth: 56 }}>
+                    <h4 className="mb-0 fw-bold">{day}</h4>
+                    <small className="d-block">{month}</small>
+                    <small className="d-block">{year}</small>
+                  </div>
+                  <div className="me-2">
+                    <span
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="top"
+                      title={`Fine ID: ${item.fineId}\nViolation: ${item.violation}`}
+                      style={{ cursor: "pointer" }}
+                    >
+                      ⋮
+                    </span>
+                  </div>
+                  <div className="d-flex align-items-center me-2">
+                    <Icon className="me-2" size={20} />
+                  </div>
+                  <div className="flex-grow-1">
+                    <span className={`fw-semibold ${statusColor}`}>{item.status}</span>
+                  </div>
                 </div>
-                <div className="me-2">
-                  <span
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="top"
-                    title={`Fine ID: ${item.fineId}\nViolation: ${item.violation}`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    ⋮
-                  </span>
-                </div>
-        <div className="flex-grow-1 d-flex align-items-center">
-                  <Icon className="me-2" size={20} />
-                </div>
-                <div className="flex-grow-1">
-                  <span className={`fw-semibold ${statusColor}`}>{item.status}</span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default DriverAppeal;
