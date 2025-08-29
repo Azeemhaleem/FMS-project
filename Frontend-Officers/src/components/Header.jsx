@@ -121,7 +121,7 @@ function Header({ username, role }) {
                         e.preventDefault(); // Prevent default link behavior
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
-                        window.location.href = "/home"; // Redirect to home
+                        window.location.href = "/loginPolice"; // Redirect to home
                       }}
                   >
                     <b>Logout</b>

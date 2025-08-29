@@ -41,7 +41,7 @@ function Header({ username, role }) {
 
     if (!token) {
       setProfileImage(default_image);
-      return; // ⛔ Don't proceed if token is missing
+      return; 
     }
 
     if (!user) {
