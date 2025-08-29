@@ -172,7 +172,13 @@ function Messages() {
             )}
 
             <div className='fines-list'>
-                <div className="search-section container" style={{ backgroundColor: "#d3e2fd", borderRadius: "10px", padding: "0px" }}>
+                <div className="search-section container mb-5 justify-content-center align-items-center "
+                     style={{
+                         backgroundColor: "#d3e2fd",
+                         padding: "1rem",
+                         marginLeft: window.innerWidth < 576 ? "" : "1rem"
+
+                     }}>
                     <div className="d-flex align-content-center">
                         <h5 className="fw-bold d-flex justify-content-start" style={{ margin: "7px" }}>
                             Messages

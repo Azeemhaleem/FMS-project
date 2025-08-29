@@ -85,17 +85,45 @@ const DriverOverview = () => {
 
   const fetchUnpaidFines = async () => {
     try {
+      setLoading(true);
       setError(null);
+
       const response = await api.get('/get-all-unpaid-fines', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+      // Log the full API response to inspect the data
+      console.log('Response Status:', response.status);
+      console.log('API Response:', response?.data);
+
+      // Check if data is an array
+      const rawData = Array.isArray(response?.data) ? response.data : [];
+      console.log('Raw Data:', rawData);
+
+      // Transform the raw data into the desired format
+      const data = rawData.map(fineData => ({
+        fineID: fineData.fine.id,
+        fineName: fineData.fine.name,
+        fineAmount: fineData.fine.amount,
+        fineDescription: fineData.fine.description,
+        issuedAt: fineData.issued_at,
+        paidAt: fineData.paid_at,
+        expiresAt: fineData.expires_at,
+        policeUserId: fineData.police_user_id
+      }));
+
+      // Log the transformed data
+      console.log('Transformed Data:', data);
+
+      // Set notifications with the transformed data
       setUnPaidFines(data);
+
     } catch (err) {
-      console.error("Failed to fetch unPaidFines", err);
-      setError("Failed to load unPaidFines. Please try again.");
+      console.error("Failed to fetch Fine Details", err);
+      setError("Failed to load Fine Details. Please try again.");
       setUnPaidFines([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,6 +142,9 @@ const DriverOverview = () => {
       setResentPayments([]);
     }
   };
+
+
+
 
   const fetchNotifications = async () => {
     try {
@@ -165,7 +196,7 @@ const DriverOverview = () => {
                       item.length < 4 && (
                           <div key={item.id} className="d-flex mb-2">
                             <div className="d-flex bg-primary-subtle rounded-4 px-3 py-2">
-                              {item.fine_name}
+                              {item.fineName}
                             </div>
                               <button className="d-flex btn btn-dark mx-2 rounded-3" style={{ width: 'fit-content' }} onClick={handlePayment}>
                                 Pay
@@ -198,7 +229,7 @@ const DriverOverview = () => {
                     item.length < 4 && (
                         <div key={item.id} className="d-flex mb-2">
                           <div className="d-flex bg-primary-subtle rounded-4 px-3 py-2">
-                            {item.fine_name}
+                            {item.fineName}
                           </div>
                         </div>
 

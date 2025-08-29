@@ -22,12 +22,37 @@ function DriverMyFines() {
         try {
             setLoading(true);
             setError(null);
+
             const response = await api.get('/get-my-fines', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+            // Log the full API response to inspect the data
+            console.log('Response Status:', response.status);
+            console.log('API Response:', response?.data);
+
+            // Check if data is an array
+            const rawData = Array.isArray(response?.data) ? response.data : [];
+            console.log('Raw Data:', rawData);
+
+            // Transform the raw data into the desired format
+            const data = rawData.map(fineData => ({
+                fineID: fineData.fine.id,
+                fineName: fineData.fine.name,
+                fineAmount: fineData.fine.amount,
+                fineDescription: fineData.fine.description,
+                issuedAt: fineData.issued_at,
+                paidAt: fineData.paid_at,
+                expiresAt: fineData.expires_at,
+                policeUserId: fineData.police_user_id
+            }));
+
+            // Log the transformed data
+            console.log('Transformed Data:', data);
+
+            // Set notifications with the transformed data
             setNotifications(data);
+
         } catch (err) {
             console.error("Failed to fetch Fine Details", err);
             setError("Failed to load Fine Details. Please try again.");
@@ -36,6 +61,8 @@ function DriverMyFines() {
             setLoading(false);
         }
     };
+
+
 
     const formatDate = (dateString) => {
         try {
@@ -67,14 +94,15 @@ function DriverMyFines() {
                             No fines issued in the last 14 days.
                         </li>
                     ) : (
+
                         notifications.map((item) => (
                             <li key={item.id || Math.random()} className="list-group-item d-flex w-100">
-                                <span className="d-flex w-25 justify-content-center">{item.fine_id || "N/A"}</span>
-                                <span className="d-flex w-25 justify-content-center">{item.fine_name || "N/A"}</span>
-                                <span className="d-flex w-50 justify-content-center">{item.area || "N/A"}</span>
-                                <span className="d-flex w-50 justify-content-center">{item.paid_at|| "N/A"}</span>
+                                <span className="d-flex w-25 justify-content-center">{item.fineID || "N/A"}</span>
+                                <span className="d-flex w-25 justify-content-center">{item.fineName || "N/A"}</span>
+                                <span className="d-flex w-50 justify-content-center">{item.fineAmount || "N/A"}</span>
+                                <span className="d-flex w-50 justify-content-center">{item.paidAt ? "Paid" : "Not Paid"}</span>
                                 <span className="text-muted small d-flex w-25 justify-content-center text-end">
-                                    {formatDate(item.charged_at)}
+                                    {formatDate(item.issuedAt)}
                                 </span>
                             </li>
                         ))

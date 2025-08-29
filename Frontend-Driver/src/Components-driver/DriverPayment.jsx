@@ -22,19 +22,64 @@ const DriverPayment = () => {
   }, [navigate, token]);
 
   // Fetch unpaid fines from backend
+  // const fetchUnpaidFines = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     const response = await api.get('/get-all-unpaid-fines', {
+  //       headers: { 'Authorization': `Bearer ${token}` }
+  //     });
+  //
+  //     const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+  //     setUnPaidFines(data);
+  //   } catch (err) {
+  //     console.error("Failed to fetch unPaidFines", err);
+  //     setError("Failed to load unPaidFines. Please try again.");
+  //     setUnPaidFines([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const fetchUnpaidFines = async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await api.get('/get-all-unpaid-fines', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+      // Log the full API response to inspect the data
+      console.log('Response Status:', response.status);
+      console.log('API Response:', response?.data);
+
+      // Check if data is an array
+      const rawData = Array.isArray(response?.data) ? response.data : [];
+      console.log('Raw Data:', rawData);
+
+      // Transform the raw data into the desired format
+      const data = rawData.map(fineData => ({
+        fineID: fineData.fine.id,
+        fineName: fineData.fine.name,
+        fineAmount: fineData.fine.amount,
+        fineDescription: fineData.fine.description,
+        issuedAt: fineData.issued_at,
+        paidAt: fineData.paid_at,
+        expiresAt: fineData.expires_at,
+        policeUserId: fineData.police_user_id
+      }));
+
+      // Log the transformed data
+      console.log('Transformed Data:', data);
+
+      // Set notifications with the transformed data
       setUnPaidFines(data);
+
     } catch (err) {
-      console.error("Failed to fetch unPaidFines", err);
-      setError("Failed to load unPaidFines. Please try again.");
+      console.error("Failed to fetch Fine Details", err);
+      setError("Failed to load Fine Details. Please try again.");
       setUnPaidFines([]);
     } finally {
       setLoading(false);
@@ -42,25 +87,68 @@ const DriverPayment = () => {
   };
 
   // Fetch paid fines from backend
+  // const fetchPaidFines = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     const response = await api.get('/get-all-unpaid-fines', {
+  //       headers: { 'Authorization': `Bearer ${token}` }
+  //     });
+  //
+  //     const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+  //     setPaidFines(data);
+  //   } catch (err) {
+  //     console.error("Failed to fetch paid fines", err);
+  //     setError("Failed to load paid fines. Please try again.");
+  //     setPaidFines([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchPaidFines = async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await api.get('/get-all-unpaid-fines', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+      // Log the full API response to inspect the data
+      console.log('Response Status:', response.status);
+      console.log('API Response:', response?.data);
+
+      // Check if data is an array
+      const rawData = Array.isArray(response?.data) ? response.data : [];
+      console.log('Raw Data:', rawData);
+
+      // Transform the raw data into the desired format
+      const data = rawData.map(fineData => ({
+        fine_ID: fineData.fine.id,
+        fine_Name: fineData.fine.name,
+        fine_Amount: fineData.fine.amount,
+        fine_Description: fineData.fine.description,
+        issued_At: fineData.issued_at,
+        paid_At: fineData.paid_at,
+        expires_At: fineData.expires_at,
+        policeUser_Id: fineData.police_user_id
+      }));
+
+      // Log the transformed data
+      console.log('Transformed Data:', data);
+
+      // Set notifications with the transformed data
       setPaidFines(data);
+
     } catch (err) {
-      console.error("Failed to fetch paid fines", err);
-      setError("Failed to load paid fines. Please try again.");
+      console.error("Failed to fetch Fine Details", err);
+      setError("Failed to load Fine Details. Please try again.");
       setPaidFines([]);
     } finally {
       setLoading(false);
     }
   };
-
 
   const formatDate = (dateString) => {
     try {
@@ -78,7 +166,6 @@ const DriverPayment = () => {
     }
 
     try {
-      // Process payment for all selected fines
       for (const fineId of selectedFines) {
         const response = await api.post('/process-payment',
             { fineIds: [fineId] },
@@ -144,8 +231,8 @@ const DriverPayment = () => {
                 <th className="col-1">Select Fine</th>
                 <th className="col-1">Fine ID</th>
                 <th className="col-2">Fine</th>
-                <th className="col-2">Police Station</th>
-                <th className="col-2">Officer Number</th>
+                <th className="col-2">Amount</th>
+                <th className="col-2">Area</th>
                 <th className="col-1">Issued Date</th>
                 <th className="text-danger col-1">Deadline</th>
                 <th className="col-1">Pay</th>
@@ -166,14 +253,14 @@ const DriverPayment = () => {
                               onChange={() => handleFineSelection(item.id)}
                           />
                         </td>
-                        <td className="col-2">{item.fine_id}</td>
-                        <td className="col-2">{item.fine_name}</td>
-                        <td className="col-2">{item.station}</td>
-                        <td className="col-2">{item.officer}</td>
-                        <td className="col-1">{formatDate(item.issued_at)}</td>
-                        <td className="text-danger col-1">{formatDate(item.expires_at)}</td>
-                        <td className="col-1">
-                          <button onClick={handlePayment}>Pay</button>
+                        <td className="col-1">{item.fineID}</td>
+                        <td className="col-1">{item.fineName}</td>
+                        <td className="col-1">{item.fineAmount}</td>
+                        <td className="col-1">N/A</td>
+                        <td className="col-2">{formatDate(item.issuedAt)}</td>
+                        <td className="text-danger col-1">{formatDate(item.expiresAt)}</td>
+                        <td className="col-2">
+                          <button className="btn btn-confirm px-3 py-1 rounded-3" onClick={handlePayment}>Pay</button>
                         </td>
                       </tr>
                   ))
@@ -192,8 +279,8 @@ const DriverPayment = () => {
               <tr className="fw-semibold text-secondary text-center">
                 <th className="col-2">Fine ID</th>
                 <th className="col-2">Fine</th>
-                <th className="col-2">Police Station</th>
-                <th className="col-2">Officer Number</th>
+                <th className="col-2">Amount</th>
+                <th className="col-2">Area</th>
                 <th className="col-2">Issued Date</th>
                 <th className="col-2">Paid Date</th>
               </tr>
@@ -206,11 +293,11 @@ const DriverPayment = () => {
               ) : (
                   paidFines.map((item) => (
                       <tr key={item.id || Math.random()}>
-                        <td className="col-2">{item.fine_id}</td>
-                        <td className="col-2">{item.fine_name}</td>
-                        <td className="col-2">{item.station}</td>
-                        <td className="col-2">{item.station}</td>
-                        <td className="col-2">{formatDate(item.issued_at)}</td>
+                        <td className="col-2">{item.fine_ID}</td>
+                        <td className="col-2">{item.fine_Name}</td>
+                        <td className="col-2">{item.fine_Amount}</td>
+                        <td className="col-2">N/A</td>
+                        <td className="col-2">{formatDate(item.issued_At)}</td>
                         <td className="col-2">{formatDate(item.paid_at)}</td>
                       </tr>
                   ))
@@ -219,7 +306,6 @@ const DriverPayment = () => {
             </table>
           </div>
         </div>
-
 
       </div>
   );
