@@ -9,6 +9,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import api from "../api/axios.jsx";
 
+
 function OfficerDashboard() {
     const [scanResult, setScanResult] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -177,8 +178,8 @@ function OfficerDashboard() {
 
                         <div className="help-col col-lg-5 text-primary-emphasis " style={{ height: "49vh" }}>
                             <h4 className="text-primary-emphasis">Check Fines Details Info</h4>
-                            <a href="#" className="text-primary-emphasis text-decoration-none">
-                                <div className="help-content bg-white px-lg-4 rounded shadow d-flex justify-content-center align-items-center"
+                            <a href="/assets/fines_list.pdf" download="fines_list.pdf" className="text-primary-emphasis text-decoration-none">
+                            <div className="help-content bg-white px-lg-4 rounded shadow d-flex justify-content-center align-items-center"
                                      style={{ height: "47vh", width: "85%" }}>
                                     <FontAwesomeIcon icon={faFileLines} style={{ fontSize: "17vh" }} className="pdf-icon" />
                                 </div>

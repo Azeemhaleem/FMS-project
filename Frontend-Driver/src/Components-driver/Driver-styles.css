@@ -197,9 +197,15 @@ label:hover .overlay-hover {
     z-index: 1;
 }
 
-.form-control{
+.form-control1 {
     width: 100% !important;
+    padding: 0.8rem;
+    border: 1px solid lightblue;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
 }
+
 
 @media only screen and (max-device-width: 700px) {
     .fines-list{
@@ -254,4 +260,3 @@ label:hover .overlay-hover {
         right: 33% !important;
     }
 }
-

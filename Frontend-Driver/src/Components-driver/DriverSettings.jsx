@@ -136,7 +136,7 @@ const Settings = () => {
   const [activeSection, setActiveSection] = useState(null);
   const [accountSection, setAccountSection] = useState(null);
   const [isVerified, setIsVerified] = useState(false);
-  const [officerData, setOfficerData] = useState(null);
+  const [driverData, setDriverData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const getToken = () => {
@@ -170,14 +170,14 @@ const Settings = () => {
   const fetchUsernameEmail = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/police/get-username-email',
+      const response = await api.get('/driver/get-user-name-email',
           {headers: {'Authorization':`Bearer ${token}`}
           }
       );
       if (response.status === 200) {
         const username = response.data.user_name;
         const email = response.data.email;
-        setOfficerData({
+        setDriverData({
           username,
           email
         })
@@ -202,7 +202,7 @@ const Settings = () => {
   useEffect(()=>{
     const emailVerification = async () => {
       try{
-        const response = await api.get('/police/is-email-verified',
+        const response = await api.get('/driver/check-email-verified',
             {
               headers:{'Authorization':`Bearer ${token}`}
             });
@@ -573,7 +573,7 @@ const Settings = () => {
                             className="info-value d-flex w-100 text-decoration-none text-black opacity-75"
                             onClick={() => setAccountSection("change_username")}
                             style={{ cursor: 'pointer' }}>
-                        <div className="d-flex justify-content-start">{officerData.username || 'No username'}</div>
+                        <div className="d-flex justify-content-start">{driverData.username || 'No username'}</div>
                         <div className="d-flex justify-content-end me-4 fs-5">&gt;</div>
                       </Link>
                     </div>
@@ -596,7 +596,7 @@ const Settings = () => {
                               {/*    user.email.replace(/^(.{5})(.*)(@.*)$/, (_, start, middle, domain) =>*/}
                               {/*        start + '*'.repeat(middle.length) + domain*/}
                               {/*    ) : 'No email available'}*/}
-                              {officerData.email || 'No email available'}
+                              {driverData.email || 'No email available'}
                             </div>
                             <div
                                 className="d-flex justify-content-center text-success">Verified &#x2705;</div>
@@ -610,7 +610,7 @@ const Settings = () => {
                               {/*    user.email.replace(/^(.{5})(.*)(@.*)$/, (_, start, middle, domain) =>*/}
                               {/*        start + '*'.repeat(middle.length) + domain*/}
                               {/*    ) : 'No email available'}*/}
-                              {officerData.email || 'No email available'}
+                              {driverData.email || 'No email available'}
                             </div>
                             <div className="d-flex justify-content-center text-danger">Not
                               Verified &#x274C;</div>

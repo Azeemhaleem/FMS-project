@@ -1,6 +1,7 @@
 #render {
     max-width: fit-content;
     max-height: 40vh !important;
+    margin-left: 7% !important;
 }
 #render button {
     background-color: #555b63;

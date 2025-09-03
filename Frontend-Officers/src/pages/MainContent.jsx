@@ -3,7 +3,7 @@ import Footer from '../components/Footer.jsx';
 import React, {useEffect, useState} from "react";
 import Slidebar from "../components/Slidebar";
 import Header from "../components/Header";
-import Quickbar from "../components/Quickbar";
+// import Quickbar from "../components/Quickbar";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminOverview from "../Components-admin/AdminOverview";
 import AdminSettings from "../Components-admin/Admin-settings";

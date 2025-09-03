@@ -4,13 +4,37 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import api from '../api/axios';
 import { Table, Button, Spinner } from 'react-bootstrap';
 
+const toStatus = (accepted) => {
+  if (typeof accepted === 'undefined' || accepted === null) return 'Pending';
+  return accepted ? 'Accepted' : 'Declined';
+};
+
+// Map one server appeal → flat view model for the UI
+const mapAppeal = (a) => {
+  const cf = a?.charged_fine ?? {};
+  const fine = cf?.fine ?? {};
+  const driver = cf?.driver_user ?? {};
+  const officer = cf?.issuing_police_officer ?? {};
+
+  return {
+    id: a?.id,
+    driverName: driver?.name || 'N/A',
+    officerName: officer?.name || 'N/A',
+    offense: fine?.title || fine?.name || 'N/A',
+    reason: a?.reason || a?.description || 'N/A',
+    status: toStatus(a?.accepted),
+    // keep original for modal if you want to show more later
+    _raw: a,
+  };
+};
+
 const ManageAppeal = () => {
-  const [appeals, setAppeals] = useState([]);
+  const [appeals, setAppeals] = useState([]);          // flattened list
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [feedback, setFeedback] = useState({ message: '', variant: '' });
   const [showModal, setShowModal] = useState(false);
-  const [selectedAppeal, setSelectedAppeal] = useState(null);
+  const [selectedAppeal, setSelectedAppeal] = useState(null); // flattened item
 
   const handleShowMore = (appeal) => {
     setSelectedAppeal(appeal);
@@ -36,35 +60,17 @@ const ManageAppeal = () => {
   }, [feedback]);
 
   const fetchAppeals = async () => {
+    setLoading(true);
     try {
       const response = await api.get('h-police/get-all-appeals');
-      setAppeals(response.data.appealsToManage);
+      const serverAppeals = Array.isArray(response.data?.appeals) ? response.data.appeals : [];
+      // Flatten to what the UI needs
+      const flattened = serverAppeals.map(mapAppeal);
+      setAppeals(flattened);
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch data – using mock data.';
+      const errorMessage = error.response?.data?.message || 'Failed to fetch data.';
       setFeedback({ message: errorMessage, variant: 'danger' });
-
-      // MOCK DATA
-      //  const mockAppeals = [
-      //    {
-      //      id: 201,
-      //      driver_user: { name: 'John Doe' },
-      //      police_user: { name: 'Officer Smith' },
-      //      appeal: { offense: 'Speeding', reason: 'Medical emergency', status: 'Pending' },
-      //    },
-      //    {
-      //      id: 202,
-      //      driver_user: { name: 'Jane Roe' },
-      //      police_user: { name: 'Officer Brown' },
-      //      appeal: { offense: 'Illegal Parking', reason: 'Erroneous ticket', status: 'Pending' },
-      //    },
-      //    {
-      //      id: 203,
-      //      driver_user: { name: 'Alex Rider' },
-      //      police_user: { name: 'Officer Lee' },
-      //      appeal: { offense: 'No Helmet', reason: 'Unaware of the rule', status: 'Pending' },
-      //    },
-      //  ];
-      //  setAppeals(mockAppeals);
+      setAppeals([]); // ensure it's an array so render won’t crash
     } finally {
       setLoading(false);
     }
@@ -90,15 +96,12 @@ const ManageAppeal = () => {
     }
   };
 
-  const filteredAppeals = appeals.filter((appeal) => {
-    const driverName = appeal.driver_user?.name?.toLowerCase() || '';
-    const officerName = appeal.police_user?.name?.toLowerCase() || '';
-    const appealId = String(appeal.id);
-
+  const filteredAppeals = (Array.isArray(appeals) ? appeals : []).filter((a) => {
+    const q = searchTerm.toLowerCase();
     return (
-      driverName.includes(searchTerm.toLowerCase()) ||
-      officerName.includes(searchTerm.toLowerCase()) ||
-      appealId.includes(searchTerm)
+      a.driverName.toLowerCase().includes(q) ||
+      a.officerName.toLowerCase().includes(q) ||
+      String(a.id).includes(searchTerm)
     );
   });
 
@@ -128,11 +131,11 @@ const ManageAppeal = () => {
             type="text"
             className="form-control"
             value={searchTerm}
-            placeholder="Search by Driver or Officer..."
+            placeholder="Search by Driver, Officer or ID..."
             style={{ fontSize: "small", width: "100%" }}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button type="submit" className="btn btn-info" style={{ width: "5%", color: "white", marginLeft: "3px" }}>
+          <button type="button" className="btn btn-info" style={{ width: "5%", color: "white", marginLeft: "3px" }}>
             <FontAwesomeIcon icon={faSearch} />
           </button>
         </div>
@@ -163,22 +166,22 @@ const ManageAppeal = () => {
                 <td colSpan="9" className="text-center">No matching appeals found.</td>
               </tr>
             ) : (
-              filteredAppeals.slice(0, 10).map((appeal, index) => (
-                <tr key={appeal.id}>
+              filteredAppeals.slice(0, 10).map((a, index) => (
+                <tr key={a.id}>
                   <td>{index + 1}</td>
-                  <td>{appeal.driver_user?.name}</td>
-                  <td>{appeal.police_user?.name}</td>
-                  <td>{appeal.appeal?.offense || 'N/A'}</td>
-                  <td>{appeal.appeal?.reason || 'N/A'}</td>
-                  <td>{appeal.appeal?.status || 'Pending'}</td>
+                  <td>{a.driverName}</td>
+                  <td>{a.officerName}</td>
+                  <td>{a.offense}</td>
+                  <td>{a.reason}</td>
+                  <td>{a.status}</td>
                   <td>
-                    <Button variant="success" size="sm" onClick={() => handleApprove(appeal.id)}>Accept</Button>
+                    <Button variant="success" size="sm" onClick={() => handleApprove(a.id)}>Accept</Button>
                   </td>
                   <td>
-                    <Button variant="danger" size="sm" onClick={() => handleDecline(appeal.id)}>Decline</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDecline(a.id)}>Decline</Button>
                   </td>
                   <td>
-                    <a href="#" className="text-primary text-decoration-none" onClick={(e) => { e.preventDefault(); handleShowMore(appeal); }}>
+                    <a href="#" className="text-primary text-decoration-none" onClick={(e) => { e.preventDefault(); handleShowMore(a); }}>
                       view
                     </a>
                   </td>
@@ -196,12 +199,12 @@ const ManageAppeal = () => {
               <h5 className="modal-title">Appeal Details</h5>
               <button type="button" className="btn-close" onClick={handleCloseModal}></button>
             </div>
-            <div className="modal-body" style={{ margin: "3%" ,marginLeft:"10%"}}>
-              <input className="form-control mb-2" type="text" value={selectedAppeal.driver_user?.name} readOnly />
-              <input className="form-control mb-2" type="text" value={selectedAppeal.police_user?.name} readOnly />
-              <input className="form-control mb-2" type="text" value={selectedAppeal.appeal?.offense || 'N/A'} readOnly />
-              <input className="form-control mb-2" type="text" value={selectedAppeal.appeal?.reason || 'N/A'} readOnly />
-              <input className="form-control mb-2" type="text" value={selectedAppeal.appeal?.status || 'Pending'} readOnly />
+            <div className="modal-body" style={{ margin: "3%", marginLeft: "10%" }}>
+              <input className="form-control mb-2" type="text" value={selectedAppeal.driverName} readOnly />
+              <input className="form-control mb-2" type="text" value={selectedAppeal.officerName} readOnly />
+              <input className="form-control mb-2" type="text" value={selectedAppeal.offense} readOnly />
+              <input className="form-control mb-2" type="text" value={selectedAppeal.reason} readOnly />
+              <input className="form-control mb-2" type="text" value={selectedAppeal.status} readOnly />
             </div>
           </div>
         </div>

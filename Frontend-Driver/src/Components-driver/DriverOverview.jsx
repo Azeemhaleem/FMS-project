@@ -8,7 +8,6 @@ const DriverOverview = () => {
 
   const [fines, setFines] = useState([]);
   const [selectedFines, setSelectedFines] = useState([]);
-  const [hoveredFine, setHoveredFine] = useState(null);
   const token = localStorage.getItem('token');
   const [unPaidFines, setUnPaidFines] = useState([]);
   const [resentPayments, setResentPayments] = useState([]);
@@ -41,47 +40,42 @@ const DriverOverview = () => {
     fetchFines();
   }, []);
 
-  // Toggle selection of a fine by id
-  const toggleFine = (fineId) => {
-    setSelectedFines((prevSelected) =>
-      prevSelected.includes(fineId)
-        ? prevSelected.filter((id) => id !== fineId)
-        : [...prevSelected, fineId]
-    );
-  };
-
-  // Select or deselect all fines
-  // const toggleSelectAll = () => {
-  //   setSelectedFines(
-  //     fines.length === selectedFines.length ? [] : fines.map((fine) => fine.id)
-  //   );
-  // };
-
   const payFines = () => {
     navigate('/DriverPayment');
   }
 
-  // Handler for pay button
-  const handlePay = async () => {
+  const handlePayment = async () => {
     if (selectedFines.length === 0) {
       alert('Please select fines to pay.');
       return;
     }
 
     try {
-      const response = await api.post('/process-payment', {
-        fineIds: selectedFines,
-      });
-
-      if (response.status === 200) {
-        alert('Payment successful!');
-        // Refresh fines after payment to update status
-        fetchUnpaidFines();
-        setSelectedFines([]);
+      // Process payment for all selected fines
+      for (const fineId of selectedFines) {
+        const response = await api.post('/process-payment',
+            { fineIds: [fineId] },
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            }
+        );
+        if(response.status === 200) {
+          console.log("Payment processed successfully");
+        }
       }
+
+      // Update unpaid fines state to reflect payments
+      setUnPaidFines(prev =>
+          prev.map(msg => selectedFines.includes(msg.id) ? { ...msg, paid_at: new Date() } : msg)
+      );
+      setSelectedFines([]);
+
     } catch (error) {
-      console.error('Payment failed:', error.response?.data || error.message);
-      alert('Payment failed. Please try again.');
+      console.error('Payment error:', error.response?.data || error.message);
+      alert('Failed to process payment');
     }
   };
 
@@ -93,15 +87,40 @@ const DriverOverview = () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await api.get('/get-all-unpaid-fines', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const data = Array.isArray(response?.data?.data) ? response.data.data : [];
+      // Log the full API response to inspect the data
+      console.log('Response Status:', response.status);
+      console.log('API Response:', response?.data);
+
+      // Check if data is an array
+      const rawData = Array.isArray(response?.data) ? response.data : [];
+      console.log('Raw Data:', rawData);
+
+      // Transform the raw data into the desired format
+      const data = rawData.map(fineData => ({
+        fineID: fineData.fine.id,
+        fineName: fineData.fine.name,
+        fineAmount: fineData.fine.amount,
+        fineDescription: fineData.fine.description,
+        issuedAt: fineData.issued_at,
+        paidAt: fineData.paid_at,
+        expiresAt: fineData.expires_at,
+        policeUserId: fineData.police_user_id
+      }));
+
+      // Log the transformed data
+      console.log('Transformed Data:', data);
+
+      // Set notifications with the transformed data
       setUnPaidFines(data);
+
     } catch (err) {
-      console.error("Failed to fetch unPaidFines", err);
-      setError("Failed to load unPaidFines. Please try again.");
+      console.error("Failed to fetch Fine Details", err);
+      setError("Failed to load Fine Details. Please try again.");
       setUnPaidFines([]);
     } finally {
       setLoading(false);
@@ -110,7 +129,6 @@ const DriverOverview = () => {
 
   const fetchRecentPayments = async () => {
     try {
-      setLoading(true);
       setError(null);
       const response = await api.get('/get-recently-paid-fines', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -122,10 +140,11 @@ const DriverOverview = () => {
       console.error("Failed to fetch unPaidFines", err);
       setError("Failed to load unPaidFines. Please try again.");
       setResentPayments([]);
-    } finally {
-      setLoading(false);
     }
   };
+
+
+
 
   const fetchNotifications = async () => {
     try {
@@ -170,16 +189,16 @@ const DriverOverview = () => {
         <div className="bg-white rounded-4 p-3">
           <div className="row">
             <div className="col-md-12 mb-3">
-              {unPaidFines.length === 0 && !loading ? (
+              {unPaidFines.length === 0 ? (
                   <div className="bg-primary-subtle rounded-4 p-2 mb-2">No Recent Fines.</div>
               ) : (
                   unPaidFines.map((item) => (
                       item.length < 4 && (
                           <div key={item.id} className="d-flex mb-2">
                             <div className="d-flex bg-primary-subtle rounded-4 px-3 py-2">
-                              {item.fine_name}
+                              {item.fineName}
                             </div>
-                              <button className="d-flex btn btn-dark mx-2 rounded-3" style={{ width: 'fit-content' }} onClick={handlePay}>
+                              <button className="d-flex btn btn-dark mx-2 rounded-3" style={{ width: 'fit-content' }} onClick={handlePayment}>
                                 Pay
                               </button>
                           </div>
@@ -190,55 +209,6 @@ const DriverOverview = () => {
             </div>
           </div>
         </div>
-
-        {fines.map((fine) => (
-          <div
-            key={fine.id}
-            className="d-flex align-items-center justify-content-between bg-primary-subtle rounded-pill px-3 py-2 mb-3 position-relative"
-          >
-            <span className="fw-semibold">{fine.name || 'Unknown Fine'}</span>
-
-            <div className="d-flex align-items-center position-relative" style={{ gap: '1rem' }}>
-              <span className="fs-4" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredFine(fine.id)} onMouseLeave={() => setHoveredFine(null)}>⋮
-              </span>
-
-              {/*{hoveredFine === fine.id && (*/}
-              {/*  <div*/}
-              {/*    className="position-absolute p-2 rounded-3 shadow-sm bg-white border"*/}
-              {/*    style={{*/}
-              {/*      top: '30px',*/}
-              {/*      right: '0',*/}
-              {/*      zIndex: 10,*/}
-              {/*      minWidth: '200px',*/}
-              {/*      fontSize: '0.9rem',*/}
-              {/*    }}*/}
-              {/*  >*/}
-              {/*    <div>*/}
-              {/*      <strong>Violation:</strong> {fine.violation || 'N/A'}*/}
-              {/*    </div>*/}
-              {/*    <div>*/}
-              {/*      <strong>Date:</strong> {fine.date || 'N/A'}*/}
-              {/*    </div>*/}
-              {/*    <div>*/}
-              {/*      <strong>Fine Amount:</strong> {fine.amount || 'N/A'}*/}
-              {/*    </div>*/}
-              {/*    <div>*/}
-              {/*      <strong>Status:</strong>{' '}*/}
-              {/*      {fine.paid_at ? 'Paid' : 'Unpaid'}*/}
-              {/*    </div>*/}
-              {/*  </div>*/}
-              {/*)}*/}
-
-              <input
-                className="form-check-input rounded-circle border-secondary"
-                type="checkbox"
-                checked={selectedFines.includes(fine.id)}
-                onChange={() => toggleFine(fine.id)}
-                id={`checkbox-${fine.id}`}
-              />
-            </div>
-          </div>
-        ))}
 
         <div className="d-flex justify-content-between">
           <button className="btn btn-dark px-3 py-1 rounded-3" style={{ width: 'fit-content' }} onClick={handleLink}>
@@ -252,25 +222,14 @@ const DriverOverview = () => {
         <div className="row">
           <div className="col-md-6 mb-3">
             <h6 className="small">Recent Payments</h6>
-            {/*<div className="bg-primary-subtle rounded-4 p-3 mb-2"></div>*/}
-            {/*<div className="bg-primary-subtle rounded-4 p-3 mb-2"></div>*/}
-            {/*<div className="bg-primary-subtle rounded-4 p-3"></div>*/}
-            {resentPayments.length === 0 && !loading ? (
+            {resentPayments.length === 0 ? (
                 <div className="bg-primary-subtle rounded-4 p-2 mb-2">No Recent Payments.</div>
-                // <div className="d-flex mb-2">
-                //   <div className="d-flex bg-primary-subtle rounded-4 px-3 py-2">
-                //     No Pending Payment Fines in the last 7 days.
-                //   </div>
-                //   <button className="d-flex btn btn-dark mx-2 rounded-3" style={{ width: 'fit-content' }} onClick={handlePay}>
-                //     Pay
-                //   </button>
-                // </div>
             ) : (
                 resentPayments.map((item) => (
                     item.length < 4 && (
                         <div key={item.id} className="d-flex mb-2">
                           <div className="d-flex bg-primary-subtle rounded-4 px-3 py-2">
-                            {item.fine_name}
+                            {item.fineName}
                           </div>
                         </div>
 
@@ -280,19 +239,8 @@ const DriverOverview = () => {
           </div>
           <div className="col-md-6">
             <h6 className="small">Notifications</h6>
-            {/*<div className="bg-primary-subtle rounded-4 p-3 mb-2"></div>*/}
-            {/*<div className="bg-primary-subtle rounded-4 p-3 mb-2"></div>*/}
-            {/*<div className="bg-primary-subtle rounded-4 p-3"></div>*/}
-            {notifications.length === 0 && !loading ? (
+            {notifications.length === 0 ? (
                 <div className="bg-primary-subtle rounded-4 p-2 mb-2">No Notifications.</div>
-                // <div className="d-flex mb-2">
-                //   <div className="d-flex bg-primary-subtle rounded-4 px-3 py-2">
-                //     No Pending Payment Fines in the last 7 days.
-                //   </div>
-                //   <button className="d-flex btn btn-dark mx-2 rounded-3" style={{ width: 'fit-content' }} onClick={handlePay}>
-                //     Pay
-                //   </button>
-                // </div>
             ) : (
                 notifications.map((item) => (
                     item.length < 4 && (

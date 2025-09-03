@@ -230,11 +230,11 @@ const DriverProfile = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/police/get-username-email',
+      const response = await api.get('/driver/get-user-name-email',
           {headers: {'Authorization':`Bearer ${token}`}
           }
       );
-      const response1 = await api.get('/police/get-user-info',
+      const response1 = await api.get('/driver/get-user-info',
           {headers: {'Authorization':`Bearer ${token}`}
           }
       )
